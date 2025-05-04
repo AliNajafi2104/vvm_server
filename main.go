@@ -11,6 +11,7 @@ import (
 func main() {
 	db, err := database.InitDb()
 	if err != nil {
+		fmt.Printf("error init db")
 		return
 	}
 
@@ -21,5 +22,4 @@ func main() {
 	fmt.Println("Server running...")
 	http.ListenAndServe(":8080", nil)
 
-	defer db.Close()
 }

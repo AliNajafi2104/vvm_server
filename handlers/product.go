@@ -1,25 +1,33 @@
 package handlers
 
 import (
-	"database/sql"
 	"encoding/json"
 	"net/http"
 
 	"github.com/AliNajafi2104/vvm_server/models"
+	"gorm.io/gorm"
 )
 
 type ProductHandler struct {
-	DB *sql.DB
+	DB *gorm.DB
 }
 
 func (p *ProductHandler) GetProductByBarcode(w http.ResponseWriter, req *http.Request) {
 
-	product := models.Product{
-		ID:      "1233434",
-		Price:   20,
-		Name:    "testproduct",
-		Barcode: "123",
-		Count:   1,
+	barcode := req.URL.Query().Get("barcode")
+
+	if barcode == "" {
+		http.Error(w, "missing barcode param", http.StatusBadRequest)
+		return
+	}
+
+	var product models.Product
+
+	result := p.DB.Where("barcode = ?", barcode).First((&product))
+
+	if result.Error != nil {
+		http.Error(w, "error getting product", http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
