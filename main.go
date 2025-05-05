@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	db, err := database.InitDb()
+	db, err := database.InitMySqlDb()
 	if err != nil {
 		fmt.Printf("error init db")
 		return
