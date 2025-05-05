@@ -22,6 +22,8 @@ func main() {
 
 	r := mux.NewRouter()
 
+	r.HandleFunc("/login", handlers.Login).Methods("POST")
+
 	protected := r.PathPrefix("/api").Subrouter()
 	protected.Use(middleware.AuthMiddleware)
 
@@ -37,7 +39,8 @@ func main() {
 
 	if err != nil {
 		fmt.Printf("Error starting server: %v\n", err)
+	} else {
+		fmt.Println("Server is running!")
 	}
 
-	fmt.Println("Server running...")
 }
