@@ -16,7 +16,7 @@ func main() {
 	}
 
 	productHandler := handlers.ProductHandler{DB: db}
-
+	inventoryHandler := handlers.InventoryHandler{DB: db}
 	http.HandleFunc("/api/products", func(w http.ResponseWriter, req *http.Request) {
 		switch req.Method {
 		case http.MethodGet:
@@ -36,6 +36,8 @@ func main() {
 		}
 
 	})
+
+	http.HandleFunc("/api/inventory", inventoryHandler.IncreaseProductCount)
 
 	fmt.Println("Server running...")
 	http.ListenAndServe(":8080", nil)
