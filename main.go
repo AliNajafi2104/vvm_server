@@ -6,6 +6,7 @@ import (
 
 	"github.com/AliNajafi2104/vvm_server/database"
 	"github.com/AliNajafi2104/vvm_server/handlers"
+	"github.com/AliNajafi2104/vvm_server/middleware"
 	"github.com/gorilla/mux"
 )
 
@@ -20,17 +21,23 @@ func main() {
 	inventoryHandler := handlers.InventoryHandler{DB: db}
 
 	r := mux.NewRouter()
-	r.HandleFunc("/api/products", productHandler.CreateProduct).Methods("POST")
-	r.HandleFunc("/api/products/{barcode}", productHandler.GetProductByBarcode).Methods("GET")
-	r.HandleFunc("/api/products/{barcode}", productHandler.UpdateProduct).Methods("PATCH")
-	r.HandleFunc("/api/products/{barcode}", productHandler.DeleteProduct).Methods("DELETE")
-	r.HandleFunc("/api/inventory/{barcode}", inventoryHandler.IncreaseProductCount).Methods("POST")
 
-	fmt.Println("Server running...")
+	protected := r.PathPrefix("/api").Subrouter()
+	protected.Use(middleware.AuthMiddleware)
+
+	protected.HandleFunc("/products", productHandler.CreateProduct).Methods("POST")
+	protected.HandleFunc("/products", productHandler.GetAllProducts).Methods("GET")
+	protected.HandleFunc("/products/{barcode}", productHandler.GetProductByBarcode).Methods("GET")
+	protected.HandleFunc("/products/{barcode}", productHandler.UpdateProduct).Methods("PATCH")
+	protected.HandleFunc("/products/{barcode}", productHandler.DeleteProduct).Methods("DELETE")
+	protected.HandleFunc("/inventory/{barcode}", inventoryHandler.IncreaseProductCount).Methods("POST")
+	protected.HandleFunc("/inventory", inventoryHandler.GetTotalInventoryValue).Methods("GET")
+
 	err = http.ListenAndServe(":8080", r)
 
 	if err != nil {
 		fmt.Printf("Error starting server: %v\n", err)
 	}
 
+	fmt.Println("Server running...")
 }

@@ -93,3 +93,18 @@ func (p *ProductHandler) DeleteProduct(w http.ResponseWriter, req *http.Request)
 	json.NewEncoder(w).Encode(barcode)
 
 }
+
+func (p *ProductHandler) GetAllProducts(w http.ResponseWriter, req *http.Request) {
+
+	var products []models.Product
+
+	result := p.DB.Find(&products)
+	if result.Error != nil {
+		http.Error(w, "error getting products", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(products)
+
+}

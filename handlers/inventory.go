@@ -35,3 +35,24 @@ func (p *InventoryHandler) IncreaseProductCount(w http.ResponseWriter, req *http
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(product)
 }
+
+func (p *InventoryHandler) GetTotalInventoryValue(w http.ResponseWriter, req *http.Request) {
+
+	var products []models.Product
+
+	result := p.DB.Find(&products)
+	if result.Error != nil {
+		http.Error(w, "error getting products", http.StatusInternalServerError)
+		return
+	}
+
+	var sum float64
+
+	for _, product := range products {
+		sum += product.Price * float64(product.Count)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(sum)
+
+}
