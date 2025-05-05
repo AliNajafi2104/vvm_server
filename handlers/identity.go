@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/AliNajafi2104/vvm_server/middleware"
@@ -26,7 +27,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := middleware.GenerateToken(credentials.Username)
+	token, expiration, err := middleware.GenerateToken(credentials.Username)
 
 	if err != nil {
 		http.Error(w, "error generating token", http.StatusInternalServerError)
@@ -34,6 +35,9 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"token": token})
+	json.NewEncoder(w).Encode(map[string]string{
+		"token":      token,
+		"expiration": fmt.Sprintf("%d", expiration),
+	})
 
 }

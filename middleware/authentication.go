@@ -42,13 +42,20 @@ func AuthMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func GenerateToken(username string) (string, error) {
+func GenerateToken(username string) (string, int64, error) {
+	expiration := time.Now().Add(time.Second * 24).Unix()
 	claims := jwt.MapClaims{
 		"username": username,
-		"exp":      time.Now().Add(time.Hour * 24).Unix(),
+		"exp":      expiration,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	return token.SignedString(jwtSecret)
+	tokenString, err := token.SignedString(jwtSecret)
+
+	if err != nil {
+		return "", 0, err
+	}
+
+	return tokenString, expiration, nil
 }
