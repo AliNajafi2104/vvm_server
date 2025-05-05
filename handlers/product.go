@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/AliNajafi2104/vvm_server/models"
+	"github.com/gorilla/mux"
 	"gorm.io/gorm"
 )
 
@@ -14,7 +15,8 @@ type ProductHandler struct {
 
 func (p *ProductHandler) GetProductByBarcode(w http.ResponseWriter, req *http.Request) {
 
-	barcode := req.URL.Query().Get("barcode")
+	vars := mux.Vars(req)
+	barcode := vars["barcode"]
 
 	if barcode == "" {
 		http.Error(w, "missing barcode param", http.StatusBadRequest)
@@ -66,7 +68,8 @@ func (p *ProductHandler) UpdateProduct(w http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	barcode := req.URL.Query().Get("barcode")
+	vars := mux.Vars(req)
+	barcode := vars["barcode"]
 	var product models.Product
 
 	p.DB.First(&product, barcode)
@@ -82,8 +85,8 @@ func (p *ProductHandler) UpdateProduct(w http.ResponseWriter, req *http.Request)
 
 func (p *ProductHandler) DeleteProduct(w http.ResponseWriter, req *http.Request) {
 
-	barcode := req.URL.Query().Get("barcode")
-
+	vars := mux.Vars(req)
+	barcode := vars["barcode"]
 	p.DB.Delete(&models.Product{}, barcode)
 
 	w.WriteHeader(http.StatusAccepted)

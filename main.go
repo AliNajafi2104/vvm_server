@@ -6,6 +6,7 @@ import (
 
 	"github.com/AliNajafi2104/vvm_server/database"
 	"github.com/AliNajafi2104/vvm_server/handlers"
+	"github.com/gorilla/mux"
 )
 
 func main() {
@@ -17,29 +18,19 @@ func main() {
 
 	productHandler := handlers.ProductHandler{DB: db}
 	inventoryHandler := handlers.InventoryHandler{DB: db}
-	http.HandleFunc("/api/products", func(w http.ResponseWriter, req *http.Request) {
-		switch req.Method {
-		case http.MethodGet:
-			productHandler.GetProductByBarcode(w, req)
 
-		case http.MethodPost:
-			productHandler.CreateProduct(w, req)
-
-		case http.MethodPut:
-			productHandler.UpdateProduct(w, req)
-
-		case http.MethodDelete:
-			productHandler.DeleteProduct(w, req)
-
-		default:
-			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-		}
-
-	})
-
-	http.HandleFunc("/api/inventory", inventoryHandler.IncreaseProductCount)
+	r := mux.NewRouter()
+	r.HandleFunc("/api/products", productHandler.CreateProduct).Methods("POST")
+	r.HandleFunc("/api/products/{barcode}", productHandler.GetProductByBarcode).Methods("GET")
+	r.HandleFunc("/api/products/{barcode}", productHandler.UpdateProduct).Methods("PATCH")
+	r.HandleFunc("/api/products/{barcode}", productHandler.DeleteProduct).Methods("DELETE")
+	r.HandleFunc("/api/inventory/{barcode}", inventoryHandler.IncreaseProductCount).Methods("POST")
 
 	fmt.Println("Server running...")
-	http.ListenAndServe(":8080", nil)
+	err = http.ListenAndServe(":8080", r)
+
+	if err != nil {
+		fmt.Printf("Error starting server: %v\n", err)
+	}
 
 }
