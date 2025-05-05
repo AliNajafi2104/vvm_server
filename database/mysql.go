@@ -20,3 +20,24 @@ func InitMySqlDb() (*gorm.DB, error) {
 
 	return db, nil
 }
+
+type Database interface {
+	FindProductByBarcode(barcode string) (*models.Product, error)
+	SaveProduct(product *models.Product) error
+	CreateProduct(product *models.Product) error
+	DeleteProduct(barcode string) error
+}
+
+type GormDatabase struct {
+	DB *gorm.DB
+}
+
+func (g *GormDatabase) FindProductByBarcode(barcode string) (*models.Product, error) {
+	var product models.Product
+	result := g.DB.First(&product, "barcode = ?", barcode)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &product, nil
+
+}
