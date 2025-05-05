@@ -23,10 +23,10 @@ func (p *ProductHandler) GetProductByBarcode(w http.ResponseWriter, req *http.Re
 
 	var product models.Product
 
-	result := p.DB.Where("barcode = ?", barcode).First((&product))
+	result := p.DB.First(&product, barcode)
 
 	if result.Error != nil {
-		http.Error(w, "error getting product", http.StatusInternalServerError)
+		http.Error(w, "could not find product", http.StatusNotFound)
 		return
 	}
 
@@ -38,5 +38,55 @@ func (p *ProductHandler) GetProductByBarcode(w http.ResponseWriter, req *http.Re
 }
 
 func (p *ProductHandler) CreateProduct(w http.ResponseWriter, req *http.Request) {
+
+	var product models.Product
+
+	if err := json.NewDecoder(req.Body).Decode(&product); err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	result := p.DB.Create(&product)
+	if result.Error != nil {
+		http.Error(w, "failed to create product", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(product)
+
+}
+
+func (p *ProductHandler) UpdateProduct(w http.ResponseWriter, req *http.Request) {
+
+	var updatedProduct models.Product
+
+	if err := json.NewDecoder(req.Body).Decode(&updatedProduct); err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	barcode := req.URL.Query().Get("barcode")
+	var product models.Product
+
+	p.DB.First(&product, barcode)
+
+	product.Count = updatedProduct.Count
+	product.Price = updatedProduct.Price
+	product.Name = updatedProduct.Name
+	p.DB.Save(&product)
+
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(product)
+}
+
+func (p *ProductHandler) DeleteProduct(w http.ResponseWriter, req *http.Request) {
+
+	barcode := req.URL.Query().Get("barcode")
+
+	p.DB.Delete(&models.Product{}, barcode)
+
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode(barcode)
 
 }

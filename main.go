@@ -17,7 +17,25 @@ func main() {
 
 	productHandler := handlers.ProductHandler{DB: db}
 
-	http.HandleFunc("/api/products", productHandler.GetProductByBarcode)
+	http.HandleFunc("/api/products", func(w http.ResponseWriter, req *http.Request) {
+		switch req.Method {
+		case http.MethodGet:
+			productHandler.GetProductByBarcode(w, req)
+
+		case http.MethodPost:
+			productHandler.CreateProduct(w, req)
+
+		case http.MethodPut:
+			productHandler.UpdateProduct(w, req)
+
+		case http.MethodDelete:
+			productHandler.DeleteProduct(w, req)
+
+		default:
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		}
+
+	})
 
 	fmt.Println("Server running...")
 	http.ListenAndServe(":8080", nil)
