@@ -4,13 +4,21 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/AliNajafi2104/vvm_server/database"
 	"github.com/AliNajafi2104/vvm_server/models"
 	"github.com/gorilla/mux"
-	"gorm.io/gorm"
 )
 
 type ProductHandler struct {
-	DB *gorm.DB
+	DB database.Database[models.Product]
+}
+
+type ProductHTTPHandler interface {
+	GetProductByBarcode(w http.ResponseWriter, req *http.Request)
+	CreateProduct(w http.ResponseWriter, req *http.Request)
+	UpdateProduct(w http.ResponseWriter, req *http.Request)
+	DeleteProduct(w http.ResponseWriter, req *http.Request)
+	GetAllProducts(w http.ResponseWriter, req *http.Request)
 }
 
 func (p *ProductHandler) GetProductByBarcode(w http.ResponseWriter, req *http.Request) {
@@ -23,11 +31,9 @@ func (p *ProductHandler) GetProductByBarcode(w http.ResponseWriter, req *http.Re
 		return
 	}
 
-	var product models.Product
+	product, err := p.DB.FindByID(barcode)
 
-	result := p.DB.First(&product, barcode)
-
-	if result.Error != nil {
+	if err != nil {
 		http.Error(w, "could not find product", http.StatusNotFound)
 		return
 	}
@@ -48,8 +54,8 @@ func (p *ProductHandler) CreateProduct(w http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	result := p.DB.Create(&product)
-	if result.Error != nil {
+	err := p.DB.CreateEntity(&product)
+	if err != nil {
 		http.Error(w, "failed to create product", http.StatusInternalServerError)
 		return
 	}
@@ -68,26 +74,25 @@ func (p *ProductHandler) UpdateProduct(w http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	vars := mux.Vars(req)
-	barcode := vars["barcode"]
-	var product models.Product
-
-	p.DB.First(&product, barcode)
-
-	product.Count = updatedProduct.Count
-	product.Price = updatedProduct.Price
-	product.Name = updatedProduct.Name
-	p.DB.Save(&product)
-
+	err := p.DB.UpdateEntity(&updatedProduct)
+	if err != nil {
+		http.Error(w, "error updating product", http.StatusInternalServerError)
+		return
+	}
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(product)
+	json.NewEncoder(w).Encode(updatedProduct)
 }
 
 func (p *ProductHandler) DeleteProduct(w http.ResponseWriter, req *http.Request) {
 
 	vars := mux.Vars(req)
 	barcode := vars["barcode"]
-	p.DB.Delete(&models.Product{}, barcode)
+
+	err := p.DB.DeleteByID(barcode)
+	if err != nil {
+		http.Error(w, "error deleting product", http.StatusInternalServerError)
+		return
+	}
 
 	w.WriteHeader(http.StatusAccepted)
 	json.NewEncoder(w).Encode(barcode)
@@ -96,10 +101,8 @@ func (p *ProductHandler) DeleteProduct(w http.ResponseWriter, req *http.Request)
 
 func (p *ProductHandler) GetAllProducts(w http.ResponseWriter, req *http.Request) {
 
-	var products []models.Product
-
-	result := p.DB.Find(&products)
-	if result.Error != nil {
+	products, err := p.DB.FindAll()
+	if err != nil {
 		http.Error(w, "error getting products", http.StatusInternalServerError)
 		return
 	}

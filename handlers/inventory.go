@@ -6,42 +6,43 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/AliNajafi2104/vvm_server/database"
 	"github.com/AliNajafi2104/vvm_server/models"
-	"gorm.io/gorm"
 )
 
 type InventoryHandler struct {
-	DB *gorm.DB
+	DB database.Database[models.Product]
+}
+
+type InventoryHTTPHandler interface {
+	IncreaseProductCount(w http.ResponseWriter, req *http.Request)
+	GetTotalInventoryValue(w http.ResponseWriter, req *http.Request)
 }
 
 func (p *InventoryHandler) IncreaseProductCount(w http.ResponseWriter, req *http.Request) {
 
 	count := req.URL.Query().Get("count")
 	barcode := req.URL.Query().Get("barcode")
-	var product models.Product
 
-	p.DB.First(&product, barcode)
+	product, err := p.DB.FindByID(barcode)
 
 	num, err := strconv.Atoi(count)
 
 	if err != nil {
 		fmt.Println("Error:", err)
 	}
-
 	product.Count = num + product.Count
 
-	p.DB.Save(&product)
-
+	p.DB.UpdateEntity(product)
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(product)
 }
 
 func (p *InventoryHandler) GetTotalInventoryValue(w http.ResponseWriter, req *http.Request) {
 
-	var products []models.Product
+	products, err := p.DB.FindAll()
 
-	result := p.DB.Find(&products)
-	if result.Error != nil {
+	if err != nil {
 		http.Error(w, "error getting products", http.StatusInternalServerError)
 		return
 	}

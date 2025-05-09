@@ -17,8 +17,8 @@ func main() {
 		return
 	}
 
-	productHandler := handlers.ProductHandler{DB: db}
-	inventoryHandler := handlers.InventoryHandler{DB: db}
+	var productHandler handlers.ProductHTTPHandler = &handlers.ProductHandler{DB: db}
+	var inventoryHandler handlers.InventoryHTTPHandler = &handlers.InventoryHandler{DB: db}
 
 	r := mux.NewRouter()
 
